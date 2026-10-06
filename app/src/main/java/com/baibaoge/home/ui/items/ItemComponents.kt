@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,13 +23,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.baibaoge.home.data.entity.ItemEntity
 import com.baibaoge.home.ui.components.AsyncImageBox
+import com.baibaoge.home.ui.theme.ExpireAmber
+import com.baibaoge.home.ui.theme.ExpireOrange
+import com.baibaoge.home.ui.theme.ExpireRed
 import com.baibaoge.home.util.DateUtils
 import com.baibaoge.home.util.ReminderSettings
 
 /** 临期分级色（设计方案 3.1.4）：≤3 天红，3-7 天橙，>7 天黄 */
-val ExpiryRed = Color(0xFFE53935)
-val ExpiryOrange = Color(0xFFFB8C00)
-val ExpiryYellow = Color(0xFFF9A825)
+val ExpiryRed = ExpireRed
+val ExpiryOrange = ExpireOrange
+val ExpiryYellow = ExpireAmber
 
 /** 物品类型中文名 */
 fun itemTypeName(type: Int): String = when (type) {
@@ -86,7 +90,9 @@ fun ItemCard(item: ItemEntity, locationName: String?, onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(horizontal = 16.dp, vertical = 5.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             AsyncImageBox(
@@ -95,7 +101,7 @@ fun ItemCard(item: ItemEntity, locationName: String?, onClick: () -> Unit) {
                 modifier = Modifier
                     .padding(end = 12.dp)
                     .size(56.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(12.dp))
             )
             Column(Modifier.weight(1f)) {
                 Row {

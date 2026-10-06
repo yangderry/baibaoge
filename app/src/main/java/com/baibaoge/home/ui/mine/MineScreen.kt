@@ -2,11 +2,18 @@ package com.baibaoge.home.ui.mine
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -15,7 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.baibaoge.home.auth.AuthManager
@@ -68,33 +77,54 @@ fun MineScreen(
         }
     }
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(top = 20.dp, bottom = 100.dp)) {
         Text("我的", style = MaterialTheme.typography.headlineSmall)
-        MineEntry("历史档案", "查看已归档物品，可恢复库存", onNavigateArchives)
-        MineEntry("同步管理", "NAS 备份 / 恢复 / 同步日志", onNavigateSync)
-        MineEntry("数据导出", "将数据库文件导出到手机存储，可自行留存或迁移") {
+        Spacer(Modifier.height(12.dp))
+        MineEntry("📦", "历史档案", "查看已归档物品，可恢复库存", onNavigateArchives)
+        MineEntry("☁️", "同步管理", "NAS 备份 / 恢复 / 同步日志", onNavigateSync)
+        MineEntry("📤", "数据导出", "将数据库文件导出到手机存储，可自行留存或迁移") {
             val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             auth.externalActivityInFlight = true
             exportLauncher.launch("baobaoge_db_$stamp.db")
         }
-        MineEntry("设置", "临期提醒天数 / 通知权限 / 后台白名单", onNavigateSettings)
+        MineEntry("⚙️", "设置", "临期提醒天数 / 通知权限 / 后台白名单", onNavigateSettings)
         SnackbarHost(snackbarHostState)
     }
 }
 
 @Composable
-private fun MineEntry(title: String, subtitle: String, onClick: () -> Unit) {
+private fun MineEntry(emoji: String, title: String, subtitle: String, onClick: () -> Unit) {
     Card(
         Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .clickable(onClick = onClick)
+            .padding(vertical = 5.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
+        Row(
+            Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) { Text(emoji, style = MaterialTheme.typography.titleMedium) }
+            Column(Modifier
+                .weight(1f)
+                .padding(start = 12.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
+                "›",
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
@@ -46,6 +48,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -140,6 +143,7 @@ fun MainScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Box(
@@ -222,7 +226,8 @@ fun MainScreen(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shadowElevation = 6.dp
+                        border = androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.surface),
+                        shadowElevation = 8.dp
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(Icons.Default.Add, contentDescription = "添加")
@@ -289,10 +294,10 @@ fun MainScreen(
     }
 }
 
-/** 底部导航项（图标+文字），普通 clickable，触摸区域明确 */
+/** 底部导航项：选中时图标带胶囊高亮底（pill indicator） */
 @Composable
 private fun RowScope.NavTabItem(tab: MainTab, selected: Boolean, onClick: () -> Unit) {
-    val tint = if (selected) MaterialTheme.colorScheme.primary
+    val tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
     else MaterialTheme.colorScheme.onSurfaceVariant
     Column(
         modifier = Modifier
@@ -302,11 +307,24 @@ private fun RowScope.NavTabItem(tab: MainTab, selected: Boolean, onClick: () -> 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(tab.icon, contentDescription = tab.label, tint = tint)
+        Box(
+            modifier = Modifier
+                .padding(bottom = 2.dp)
+                .height(28.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    if (selected) MaterialTheme.colorScheme.primaryContainer
+                    else androidx.compose.ui.graphics.Color.Transparent
+                )
+                .padding(horizontal = 18.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(tab.icon, contentDescription = tab.label, tint = tint)
+        }
         Text(
             tab.label,
             style = MaterialTheme.typography.labelSmall,
-            color = tint
+            color = if (selected) MaterialTheme.colorScheme.primary else tint
         )
     }
 }

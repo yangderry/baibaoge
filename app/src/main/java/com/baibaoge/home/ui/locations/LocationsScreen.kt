@@ -84,8 +84,9 @@ fun LocationsScreen(
                     Card(
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
-                            .clickable { onLocationClick(loc.location.locationId) }
+                            .padding(horizontal = 16.dp, vertical = 5.dp)
+                            .clickable { onLocationClick(loc.location.locationId) },
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     ) {
                         Row(
                             Modifier.padding(12.dp),
