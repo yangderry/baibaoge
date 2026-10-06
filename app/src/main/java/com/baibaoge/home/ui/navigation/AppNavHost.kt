@@ -13,6 +13,7 @@ import androidx.navigation.navArgument
 import com.baibaoge.home.data.AppDatabase
 import com.baibaoge.home.ui.items.ItemDetailScreen
 import com.baibaoge.home.ui.items.ItemEditScreen
+import com.baibaoge.home.ui.locations.BatchPrintQrScreen
 import com.baibaoge.home.ui.locations.LocationItemsScreen
 import com.baibaoge.home.ui.main.MainScreen
 import com.baibaoge.home.ui.mine.ArchivesScreen
@@ -39,6 +40,7 @@ object Routes {
     const val SCAN = "scan"
     const val OCR = "ocr_capture"
     const val LOCATION_ITEMS = "location_items/{locationId}"
+    const val BATCH_PRINT_QR = "batch_print_qr"
 
     fun itemDetail(itemId: String) = "item_detail/$itemId"
     fun locationItems(locationId: String) = "location_items/$locationId"
@@ -70,7 +72,9 @@ fun AppNavHost() {
                 },
                 onNavigateToArchives = { navController.navigate(Routes.ARCHIVES) },
                 onNavigateScan = { navController.navigate(Routes.SCAN) },
-                onNavigateOcr = { navController.navigate(Routes.OCR) }
+                onNavigateOcr = { navController.navigate(Routes.OCR) },
+                onNavigateLocationItems = { id -> navController.navigate(Routes.locationItems(id)) },
+                onNavigateBatchPrint = { navController.navigate(Routes.BATCH_PRINT_QR) }
             )
         }
         composable(
@@ -157,6 +161,9 @@ fun AppNavHost() {
                 onItemClick = { id -> navController.navigate(Routes.itemDetail(id)) },
                 onBack = { navController.popBackStack() }
             )
+        }
+        composable(Routes.BATCH_PRINT_QR) {
+            BatchPrintQrScreen(onBack = { navController.popBackStack() })
         }
     }
 }

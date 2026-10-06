@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.baibaoge.home.auth.AuthManager
 import com.baibaoge.home.data.AppDatabase
 import com.baibaoge.home.data.entity.LocationEntity
 import com.baibaoge.home.ui.items.ItemsScreen
@@ -81,7 +82,9 @@ fun MainScreen(
     onNavigateToEdit: (String?, ItemPrefill?) -> Unit,
     onNavigateToArchives: () -> Unit,
     onNavigateScan: () -> Unit,
-    onNavigateOcr: () -> Unit
+    onNavigateOcr: () -> Unit,
+    onNavigateLocationItems: (String) -> Unit,
+    onNavigateBatchPrint: () -> Unit
 ) {
     var currentTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     var showAddSheet by remember { mutableStateOf(false) }
@@ -97,9 +100,11 @@ fun MainScreen(
     }
 
     // 语音录入：系统 RecognizerIntent 离线识别 → 结果填入物品名称
+    val auth = remember { AuthManager.getInstance(context) }
     val voiceLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        auth.externalActivityInFlight = false
         val text = result.data
             ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             ?.firstOrNull()?.takeIf { it.isNotBlank() }
@@ -120,8 +125,10 @@ fun MainScreen(
             putExtra(RecognizerIntent.EXTRA_PROMPT, "请说出物品名称")
         }
         try {
+            auth.externalActivityInFlight = true
             voiceLauncher.launch(intent)
         } catch (e: ActivityNotFoundException) {
+            auth.externalActivityInFlight = false
             toast("当前设备不支持语音识别")
         }
     }
@@ -143,7 +150,10 @@ fun MainScreen(
                 when (currentTab) {
                     MainTab.HOME -> HomeScreen()
                     MainTab.ITEMS -> ItemsScreen(onItemClick = onNavigateToDetail)
-                    MainTab.LOCATION -> LocationsScreen()
+                    MainTab.LOCATION -> LocationsScreen(
+                        onLocationClick = onNavigateLocationItems,
+                        onBatchPrint = onNavigateBatchPrint
+                    )
                     MainTab.MINE -> MineScreen(onNavigateArchives = onNavigateToArchives)
                 }
             }
@@ -209,11 +219,12 @@ fun MainScreen(
         LocationEditDialog(
             title = "新增地点",
             onDismiss = { showAddLocationDialog = false },
-            onConfirm = { name ->
+            onConfirm = { name, photo ->
                 scope.launch {
                     val loc = LocationEntity(
                         locationId = IdGenerator.locationId(),
                         locationName = name,
+                        photoPath = photo,
                         createTime = System.currentTimeMillis()
                     )
                     val qrPath = withContext(Dispatchers.IO) {

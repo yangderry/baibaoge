@@ -30,8 +30,8 @@ object QrCodeUtil {
         else -> null
     }
 
-    /** 生成二维码 PNG 保存到私有目录 qrs/，返回绝对路径；失败返回 null */
-    fun generateToFile(context: Context, content: String, fileName: String, sizePx: Int = 512): String? {
+    /** 生成二维码 Bitmap；失败返回 null */
+    fun generateBitmap(content: String, sizePx: Int = 512): Bitmap? {
         return runCatching {
             val matrix = MultiFormatWriter().encode(content, BarcodeFormat.QR_CODE, sizePx, sizePx)
             val bmp = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.RGB_565)
@@ -40,6 +40,14 @@ object QrCodeUtil {
                     bmp.setPixel(x, y, if (matrix.get(x, y)) 0xFF000000.toInt() else 0xFFFFFFFF.toInt())
                 }
             }
+            bmp
+        }.getOrNull()
+    }
+
+    /** 生成二维码 PNG 保存到私有目录 qrs/，返回绝对路径；失败返回 null */
+    fun generateToFile(context: Context, content: String, fileName: String, sizePx: Int = 512): String? {
+        return runCatching {
+            val bmp = generateBitmap(content, sizePx) ?: return null
             val dir = File(context.filesDir, "qrs").apply { mkdirs() }
             val file = File(dir, fileName)
             FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }

@@ -1,13 +1,10 @@
 package com.baibaoge.home.ui.locations
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,9 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.baibaoge.home.data.AppDatabase
-import com.baibaoge.home.data.entity.ItemEntity
-import com.baibaoge.home.ui.items.itemTypeName
-import com.baibaoge.home.util.DateUtils
+import com.baibaoge.home.ui.items.ItemCard
 import kotlinx.coroutines.flow.flow
 
 /** 地点详情页：展示该地点下所有在库物品；可从扫码地点码进入 */
@@ -59,21 +54,11 @@ fun LocationItemsScreen(
         } else {
             LazyColumn {
                 items(items, key = { it.itemId }) { item ->
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp)
-                            .clickable { onItemClick(item.itemId) }
-                    ) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(item.name, style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                "${itemTypeName(item.itemType)} · 数量 ${item.quantity} · 到期 ${DateUtils.formatDate(item.expiryDate)}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                    ItemCard(
+                        item = item,
+                        locationName = location?.locationName,
+                        onClick = { onItemClick(item.itemId) }
+                    )
                 }
             }
         }

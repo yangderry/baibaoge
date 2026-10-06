@@ -1,14 +1,12 @@
 package com.baibaoge.home.ui.items
 
 import android.app.DatePickerDialog
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,7 +18,6 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,16 +34,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.baibaoge.home.data.AppDatabase
 import com.baibaoge.home.data.entity.ItemEntity
+import com.baibaoge.home.ui.components.PhotoPicker
 import com.baibaoge.home.ui.navigation.ItemPrefill
 import com.baibaoge.home.util.DateUtils
 import com.baibaoge.home.util.IdGenerator
-import com.baibaoge.home.util.ImageUtils
 import com.baibaoge.home.util.QrCodeUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -129,16 +125,6 @@ fun ItemEditScreen(itemId: String?, prefill: ItemPrefill? = null, onBack: () -> 
                 style = MaterialTheme.typography.headlineSmall
             )
 
-            if (photoPath.isNotBlank()) {
-                ImageUtils.loadBitmap(photoPath)?.let { bmp ->
-                    Image(
-                        bitmap = bmp.asImageBitmap(),
-                        contentDescription = "物品照片",
-                        modifier = Modifier.fillMaxWidth().height(160.dp)
-                    )
-                }
-            }
-
             OutlinedTextField(
                 value = name, onValueChange = { name = it },
                 label = { Text("名称 *") }, modifier = Modifier.fillMaxWidth(), singleLine = true
@@ -209,6 +195,12 @@ fun ItemEditScreen(itemId: String?, prefill: ItemPrefill? = null, onBack: () -> 
             DateRow("生产日期", produceDate, { pickDate(produceDate) { produceDate = it } }, { produceDate = 0L })
             DateRow("到期日期", expiryDate, { pickDate(expiryDate) { expiryDate = it } }, { expiryDate = 0L })
 
+            Text("物品照片", style = MaterialTheme.typography.titleSmall)
+            PhotoPicker(
+                photoPath = photoPath.ifBlank { null },
+                onPhotoChange = { photoPath = it.orEmpty() }
+            )
+
             Spacer(Modifier.padding(4.dp))
             Button(
                 onClick = {
@@ -234,7 +226,7 @@ fun ItemEditScreen(itemId: String?, prefill: ItemPrefill? = null, onBack: () -> 
                             expiryDate = expiryDate.takeIf { it > 0 },
                             quantity = q,
                             purchaseChannel = purchaseChannel.trim().ifBlank { null },
-                            photoPath = photoPath.trim().ifBlank { base?.photoPath },
+                            photoPath = photoPath.trim().ifBlank { null },
                             locationId = locationId,
                             itemQrPath = qrPath,
                             status = if (q > 0) ItemEntity.STATUS_IN_STOCK else (base?.status ?: ItemEntity.STATUS_IN_STOCK),

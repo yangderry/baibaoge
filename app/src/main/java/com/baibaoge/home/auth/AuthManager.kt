@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 class AuthManager private constructor(context: Context) {
 
     private val dao = AppDatabase.getInstance(context).userPinDao()
+    private val prefs =
+        context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     private val _pinSet = MutableStateFlow(false)
     val pinSet: StateFlow<Boolean> = _pinSet
@@ -23,6 +25,13 @@ class AuthManager private constructor(context: Context) {
 
     private var failCount = 0
     private var lockUntil = 0L
+
+    /**
+     * 拉起外部应用（系统相机/相册）期间置 true，抑制退后台自动锁定，
+     * 避免拍照返回后界面被锁屏接管、导航栈丢失。
+     */
+    @Volatile
+    var externalActivityInFlight = false
 
     /** 应用启动时调用：加载是否已设置 PIN，并默认进入锁定态 */
     suspend fun init() {
@@ -40,10 +49,14 @@ class AuthManager private constructor(context: Context) {
                 fingerprintEnabled = if (fingerprintEnabled) 1 else 0
             )
         )
+        prefs.edit().putInt(KEY_PIN_LENGTH, pin.length).apply()
         _pinSet.value = true
         _locked.value = false
         failCount = 0
     }
+
+    /** 已设置 PIN 的位数（用于锁屏键盘输满自动验证）；未设置返回 0 */
+    fun pinLength(): Int = prefs.getInt(KEY_PIN_LENGTH, 0)
 
     /**
      * 校验 PIN。
@@ -80,9 +93,9 @@ class AuthManager private constructor(context: Context) {
         failCount = 0
     }
 
-    /** 锁定（切后台/冷启动时调用） */
+    /** 锁定（切后台/冷启动时调用）；外部应用（相机/相册）在前台时不锁定 */
     fun lock() {
-        if (_pinSet.value) _locked.value = true
+        if (_pinSet.value && !externalActivityInFlight) _locked.value = true
     }
 
     companion object {
@@ -90,6 +103,8 @@ class AuthManager private constructor(context: Context) {
         const val LOCKOUT_MILLIS = 30_000L
         const val PIN_MIN_LENGTH = 4
         const val PIN_MAX_LENGTH = 6
+        private const val PREFS_NAME = "auth_prefs"
+        private const val KEY_PIN_LENGTH = "pin_length"
 
         @Volatile
         private var INSTANCE: AuthManager? = null

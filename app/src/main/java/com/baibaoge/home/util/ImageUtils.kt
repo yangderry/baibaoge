@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
 import java.io.FileOutputStream
@@ -61,6 +62,19 @@ object ImageUtils {
             FileOutputStream(out).use { bmp.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
             bmp.recycle()
             out.absolutePath
+        }.getOrNull()
+    }
+
+    /** 从相册 content Uri 压缩保存到私有目录（先拷贝到缓存再复用文件压缩流程）；失败返回 null */
+    fun compressToPrivate(context: Context, uri: Uri, destName: String): String? {
+        return runCatching {
+            val tmp = File(context.cacheDir, "pick_${System.currentTimeMillis()}.jpg")
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(tmp).use { output -> input.copyTo(output) }
+            } ?: return null
+            val out = compressToPrivate(context, tmp, destName)
+            tmp.delete()
+            out
         }.getOrNull()
     }
 
