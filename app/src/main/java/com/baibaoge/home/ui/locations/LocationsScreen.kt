@@ -1,6 +1,5 @@
 package com.baibaoge.home.ui.locations
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -26,14 +26,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.baibaoge.home.data.AppDatabase
 import com.baibaoge.home.data.entity.LocationEntity
+import com.baibaoge.home.ui.components.AsyncImageBox
 import com.baibaoge.home.ui.components.PhotoPicker
-import com.baibaoge.home.util.ImageUtils
 import com.baibaoge.home.util.QrCodeUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -92,16 +91,14 @@ fun LocationsScreen(
                             Modifier.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            ImageUtils.loadBitmap(loc.location.photoPath)?.let { bmp ->
-                                Image(
-                                    bitmap = bmp.asImageBitmap(),
-                                    contentDescription = "地点照片",
-                                    modifier = Modifier
-                                        .padding(end = 12.dp)
-                                        .size(48.dp),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
+                            AsyncImageBox(
+                                path = loc.location.photoPath,
+                                contentDescription = "地点照片",
+                                modifier = Modifier
+                                    .padding(end = 12.dp)
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
                             Column(Modifier.weight(1f)) {
                                 Text(loc.location.locationName, style = MaterialTheme.typography.titleMedium)
                                 Text(
@@ -191,13 +188,11 @@ fun LocationsScreen(
             title = { Text(loc.locationName) },
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    qrDialogPath?.let { ImageUtils.loadBitmap(it) }?.let { bmp ->
-                        Image(
-                            bitmap = bmp.asImageBitmap(),
-                            contentDescription = "地点二维码",
-                            modifier = Modifier.size(240.dp)
-                        )
-                    } ?: Text("二维码生成失败")
+                    AsyncImageBox(
+                        path = qrDialogPath,
+                        contentDescription = "地点二维码",
+                        modifier = Modifier.size(240.dp)
+                    )
                     Text(
                         loc.locationId,
                         style = MaterialTheme.typography.bodySmall,

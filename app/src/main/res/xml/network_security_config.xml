@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 百宝格仅在家庭局域网内通过明文 HTTP 访问 NAS 备份服务（无 HTTPS），不访问公网明文接口 -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

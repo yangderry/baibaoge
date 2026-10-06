@@ -41,5 +41,13 @@ abstract class AppDatabase : RoomDatabase() {
                     .build().also { INSTANCE = it }
             }
         }
+
+        /** 从 NAS 恢复备份前：关闭当前连接并重置单例（下次 getInstance 重新打开） */
+        fun closeAndReset() {
+            synchronized(this) {
+                INSTANCE?.close()
+                INSTANCE = null
+            }
+        }
     }
 }

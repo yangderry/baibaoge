@@ -188,7 +188,9 @@ fun ItemEditScreen(itemId: String?, prefill: ItemPrefill? = null, onBack: () -> 
             )
             OutlinedTextField(
                 value = tags, onValueChange = { tags = it },
-                label = { Text("标签，逗号分隔（可选）") }, modifier = Modifier.fillMaxWidth(), singleLine = true
+                label = { Text("自定义标签（可选）") },
+                supportingText = { Text("多个标签用逗号分隔，如：常备,儿童") },
+                modifier = Modifier.fillMaxWidth(), singleLine = true
             )
 
             DateRow("购买日期", purchaseDate, { pickDate(purchaseDate) { purchaseDate = it } }, { purchaseDate = 0L })

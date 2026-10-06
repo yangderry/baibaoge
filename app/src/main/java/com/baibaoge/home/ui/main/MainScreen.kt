@@ -38,6 +38,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.baibaoge.home.auth.AuthManager
 import com.baibaoge.home.data.AppDatabase
+import com.baibaoge.home.data.entity.ItemEntity
 import com.baibaoge.home.data.entity.LocationEntity
 import com.baibaoge.home.ui.items.ItemsScreen
 import com.baibaoge.home.ui.locations.LocationEditDialog
@@ -84,9 +86,13 @@ fun MainScreen(
     onNavigateScan: () -> Unit,
     onNavigateOcr: () -> Unit,
     onNavigateLocationItems: (String) -> Unit,
-    onNavigateBatchPrint: () -> Unit
+    onNavigateBatchPrint: () -> Unit,
+    onNavigateSettings: () -> Unit,
+    onNavigateSync: () -> Unit
 ) {
     var currentTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
+    // 首页统计卡片点击后，物品页要定位到的分类
+    var itemsInitialType by remember { mutableIntStateOf(ItemEntity.TYPE_FOOD) }
     var showAddSheet by remember { mutableStateOf(false) }
     // 地点 Tab 下点击居中 ⊕ → 直接在本层弹出新增地点对话框
     var showAddLocationDialog by remember { mutableStateOf(false) }
@@ -148,13 +154,26 @@ fun MainScreen(
                     .padding(bottom = BottomReservedHeight)
             ) {
                 when (currentTab) {
-                    MainTab.HOME -> HomeScreen()
-                    MainTab.ITEMS -> ItemsScreen(onItemClick = onNavigateToDetail)
+                    MainTab.HOME -> HomeScreen(
+                        onItemClick = onNavigateToDetail,
+                        onGotoItems = { type ->
+                            itemsInitialType = type
+                            currentTab = MainTab.ITEMS
+                        }
+                    )
+                    MainTab.ITEMS -> ItemsScreen(
+                        initialType = itemsInitialType,
+                        onItemClick = onNavigateToDetail
+                    )
                     MainTab.LOCATION -> LocationsScreen(
                         onLocationClick = onNavigateLocationItems,
                         onBatchPrint = onNavigateBatchPrint
                     )
-                    MainTab.MINE -> MineScreen(onNavigateArchives = onNavigateToArchives)
+                    MainTab.MINE -> MineScreen(
+                        onNavigateArchives = onNavigateToArchives,
+                        onNavigateSync = onNavigateSync,
+                        onNavigateSettings = onNavigateSettings
+                    )
                 }
             }
 

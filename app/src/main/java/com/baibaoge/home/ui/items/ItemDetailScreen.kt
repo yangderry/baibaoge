@@ -1,6 +1,5 @@
 package com.baibaoge.home.ui.items
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,13 +27,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.baibaoge.home.data.AppDatabase
 import com.baibaoge.home.data.entity.ItemEntity
+import com.baibaoge.home.ui.components.AsyncImageBox
 import com.baibaoge.home.util.DateUtils
-import com.baibaoge.home.util.ImageUtils
 import com.baibaoge.home.util.QrCodeUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -93,15 +91,14 @@ fun ItemDetailScreen(
             Text(current.name, style = MaterialTheme.typography.headlineSmall)
 
             current.photoPath?.takeIf { it.isNotBlank() }?.let { path ->
-                ImageUtils.loadBitmap(path)?.let { bmp ->
-                    Image(
-                        bitmap = bmp.asImageBitmap(),
-                        contentDescription = "物品照片",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                    )
-                }
+                AsyncImageBox(
+                    path = path,
+                    contentDescription = "物品照片",
+                    contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -197,13 +194,11 @@ fun ItemDetailScreen(
             title = { Text("物品二维码") },
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    qrPath?.let { ImageUtils.loadBitmap(it) }?.let { bmp ->
-                        Image(
-                            bitmap = bmp.asImageBitmap(),
-                            contentDescription = "物品二维码",
-                            modifier = Modifier.size(240.dp)
-                        )
-                    } ?: Text("二维码生成失败")
+                    AsyncImageBox(
+                        path = qrPath,
+                        contentDescription = "物品二维码",
+                        modifier = Modifier.size(240.dp)
+                    )
                     Text(
                         current.itemId,
                         style = MaterialTheme.typography.bodySmall,

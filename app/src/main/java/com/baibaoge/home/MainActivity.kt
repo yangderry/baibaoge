@@ -17,6 +17,9 @@ import com.baibaoge.home.ui.auth.PinLockScreen
 import com.baibaoge.home.ui.auth.PinSetupScreen
 import com.baibaoge.home.ui.navigation.AppNavHost
 import com.baibaoge.home.ui.theme.BaibaogeTheme
+import com.baibaoge.home.util.NotificationHelper
+import com.baibaoge.home.worker.AutoSyncWorker
+import com.baibaoge.home.worker.ExpiryCheckWorker
 
 /** BiometricPrompt 需要 FragmentActivity */
 class MainActivity : FragmentActivity() {
@@ -28,6 +31,11 @@ class MainActivity : FragmentActivity() {
                 AuthManager.getInstance(applicationContext).lock()
             }
         })
+        // 临期提醒：通知渠道 + 每日凌晨 2 点周期任务
+        NotificationHelper.ensureChannel(this)
+        ExpiryCheckWorker.schedule(this)
+        // NAS 自动同步：每日凌晨 3 点（仅家庭 WiFi 白名单下执行）
+        AutoSyncWorker.schedule(this)
         setContent {
             BaibaogeTheme {
                 AppRoot()

@@ -65,6 +65,10 @@ interface ItemDao {
     @Query("SELECT * FROM items WHERE status = 1 AND expiry_date IS NOT NULL AND expiry_date <= :deadline ORDER BY expiry_date ASC")
     fun observeExpiringBefore(deadline: Long): Flow<List<ItemEntity>>
 
+    /** 临期检查用：全部在库且有到期日期的物品 */
+    @Query("SELECT * FROM items WHERE status = 1 AND expiry_date IS NOT NULL AND expiry_date > 0")
+    suspend fun getInStockWithExpiry(): List<ItemEntity>
+
     @Query("UPDATE items SET quantity = :quantity, update_time = :time WHERE item_id = :id")
     suspend fun updateQuantity(id: String, quantity: Int, time: Long)
 

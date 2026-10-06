@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.mlkit.text.chinese)
     implementation(libs.zxing.core)
     implementation(libs.androidx.exifinterface)
+    implementation(libs.androidx.work.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

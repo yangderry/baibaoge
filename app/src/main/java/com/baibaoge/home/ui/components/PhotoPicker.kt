@@ -3,7 +3,6 @@ package com.baibaoge.home.ui.components
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,8 +26,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -103,16 +100,13 @@ fun PhotoPicker(
         ) {
             when {
                 processing -> CircularProgressIndicator()
-                !photoPath.isNullOrBlank() -> ImageUtils.loadBitmap(photoPath)?.let { bmp ->
-                    Image(
-                        bitmap = bmp.asImageBitmap(),
-                        contentDescription = "照片预览",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                } ?: Text("图片加载失败", color = MaterialTheme.colorScheme.error)
+                !photoPath.isNullOrBlank() -> AsyncImageBox(
+                    path = photoPath,
+                    contentDescription = "照片预览",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                )
                 else -> Text(
                     "点击拍照或选择相册",
                     color = MaterialTheme.colorScheme.onSurfaceVariant

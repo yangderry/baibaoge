@@ -11,12 +11,12 @@ import android.print.PrintDocumentInfo
 import android.print.PrintManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,12 +39,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.baibaoge.home.auth.AuthManager
 import com.baibaoge.home.data.AppDatabase
-import com.baibaoge.home.util.ImageUtils
+import com.baibaoge.home.ui.components.AsyncImageBox
 import com.baibaoge.home.util.QrPrintPdf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -188,21 +187,21 @@ fun BatchPrintQrScreen(onBack: () -> Unit) {
                                 else selected - loc.locationId
                         }
                     )
-                    ImageUtils.loadBitmap(loc.qrPath)?.let { bmp ->
-                        Image(
-                            bitmap = bmp.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .size(36.dp)
-                        )
-                    }
+                    AsyncImageBox(
+                        path = loc.qrPath,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(36.dp)
+                    )
                     Text(loc.locationName, style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
         Row(
-            Modifier.fillMaxWidth(),
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedButton(

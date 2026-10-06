@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.baibaoge.home.data.AppDatabase
 import com.baibaoge.home.ui.items.ItemDetailScreen
 import com.baibaoge.home.ui.items.ItemEditScreen
@@ -17,6 +18,9 @@ import com.baibaoge.home.ui.locations.BatchPrintQrScreen
 import com.baibaoge.home.ui.locations.LocationItemsScreen
 import com.baibaoge.home.ui.main.MainScreen
 import com.baibaoge.home.ui.mine.ArchivesScreen
+import com.baibaoge.home.ui.mine.SettingsScreen
+import com.baibaoge.home.ui.mine.SyncLogScreen
+import com.baibaoge.home.ui.mine.SyncScreen
 import com.baibaoge.home.ui.ocr.OcrCaptureScreen
 import com.baibaoge.home.ui.scan.ScanScreen
 import kotlinx.coroutines.launch
@@ -41,6 +45,9 @@ object Routes {
     const val OCR = "ocr_capture"
     const val LOCATION_ITEMS = "location_items/{locationId}"
     const val BATCH_PRINT_QR = "batch_print_qr"
+    const val SETTINGS = "settings"
+    const val SYNC = "sync"
+    const val SYNC_LOG = "sync_log"
 
     fun itemDetail(itemId: String) = "item_detail/$itemId"
     fun locationItems(locationId: String) = "location_items/$locationId"
@@ -74,12 +81,16 @@ fun AppNavHost() {
                 onNavigateScan = { navController.navigate(Routes.SCAN) },
                 onNavigateOcr = { navController.navigate(Routes.OCR) },
                 onNavigateLocationItems = { id -> navController.navigate(Routes.locationItems(id)) },
-                onNavigateBatchPrint = { navController.navigate(Routes.BATCH_PRINT_QR) }
+                onNavigateBatchPrint = { navController.navigate(Routes.BATCH_PRINT_QR) },
+                onNavigateSettings = { navController.navigate(Routes.SETTINGS) },
+                onNavigateSync = { navController.navigate(Routes.SYNC) }
             )
         }
         composable(
             Routes.ITEM_DETAIL,
-            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
+            arguments = listOf(navArgument("itemId") { type = NavType.StringType }),
+            // 通知点击深链：baibaoge://item/{itemId}
+            deepLinks = listOf(navDeepLink { uriPattern = "baibaoge://item/{itemId}" })
         ) { entry ->
             val itemId = entry.arguments?.getString("itemId") ?: return@composable
             ItemDetailScreen(
@@ -164,6 +175,18 @@ fun AppNavHost() {
         }
         composable(Routes.BATCH_PRINT_QR) {
             BatchPrintQrScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SYNC) {
+            SyncScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateLogs = { navController.navigate(Routes.SYNC_LOG) }
+            )
+        }
+        composable(Routes.SYNC_LOG) {
+            SyncLogScreen(onBack = { navController.popBackStack() })
         }
     }
 }
