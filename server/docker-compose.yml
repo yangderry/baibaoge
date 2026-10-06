@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  baibaoge-backup:
+    build: .
+    container_name: baibaoge-backup
+    ports:
+      - "5000:5000"
+    volumes:
+      - /share/Container/baobaoge/backup:/backup
+    environment:
+      - TZ=Asia/Shanghai
+    mem_limit: 256m
+    cpus: 0.5
+    restart: unless-stopped
