@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -275,21 +274,29 @@ fun MainScreen(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
-                AddEntryItem("扫码录入") {
-                    showAddSheet = false
-                    onNavigateScan()
-                }
-                AddEntryItem("拍照录入") {
-                    showAddSheet = false
-                    onNavigateOcr()
-                }
-                AddEntryItem("语音录入") {
-                    showAddSheet = false
-                    startVoiceInput()
-                }
-                AddEntryItem("手动录入") {
-                    showAddSheet = false
-                    onNavigateToEdit(null, null)
+                // 小图标+文字：四等分横排，与「我的」页 emoji 入口风格一致
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    AddEntryItem("🔳", "扫码录入") {
+                        showAddSheet = false
+                        onNavigateScan()
+                    }
+                    AddEntryItem("📷", "拍照录入") {
+                        showAddSheet = false
+                        onNavigateOcr()
+                    }
+                    AddEntryItem("🎤", "语音录入") {
+                        showAddSheet = false
+                        startVoiceInput()
+                    }
+                    AddEntryItem("✏️", "手动录入") {
+                        showAddSheet = false
+                        onNavigateToEdit(null, null)
+                    }
                 }
             }
         }
@@ -331,13 +338,29 @@ private fun RowScope.NavTabItem(tab: MainTab, selected: Boolean, onClick: () -> 
     }
 }
 
+/** 录入方式项：淡色圆角方块 + 语义 emoji + 下方文字 */
 @Composable
-private fun AddEntryItem(label: String, onClick: () -> Unit) {
-    ListItem(
-        headlineContent = { Text(label) },
+private fun AddEntryItem(emoji: String, label: String, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .height(56.dp)
-    )
+            .padding(horizontal = 8.dp, vertical = 12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(emoji, style = MaterialTheme.typography.titleLarge)
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(top = 6.dp)
+        )
+    }
 }

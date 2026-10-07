@@ -1,8 +1,10 @@
 package com.baibaoge.home.ui.items
 
-import android.app.DatePickerDialog
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -22,6 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,9 +54,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
+import java.util.TimeZone
 
 /** 手动录入/编辑物品（itemId 为空表示新增）；prefill 为扫码/OCR/语音录入带入的预填数据 */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ItemEditScreen(itemId: String?, prefill: ItemPrefill? = null, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -95,17 +102,43 @@ fun ItemEditScreen(itemId: String?, prefill: ItemPrefill? = null, onBack: () -> 
         }
     }
 
-    fun pickDate(current: Long, onPick: (Long) -> Unit) {
-        val cal = Calendar.getInstance()
-        if (current > 0) cal.timeInMillis = current
+    // 正在编辑哪个日期字段（null = 未弹出选择器）；M3 DatePicker 带年份下拉与输入模式，跨年选择更快
+    var pickingDate by remember { mutableStateOf<DateFieldKind?>(null) }
+
+    // ---- M3 日期选择器弹窗 ----
+    pickingDate?.let { field ->
+        val initialMillis = when (field) {
+            DateFieldKind.PURCHASE -> purchaseDate
+            DateFieldKind.PRODUCE -> produceDate
+            DateFieldKind.EXPIRE -> expiryDate
+        }.let { millis ->
+            // DatePicker 内部用 UTC 零时；将本地日期先转 UTC 午夜传入，选中后再转回本地
+            if (millis > 0) millis.toUtcMidnight() else null
+        }
+        val pickerState = rememberDatePickerState(
+            initialSelectedDateMillis = initialMillis,
+            initialDisplayMode = androidx.compose.material3.DisplayMode.Picker // 先显示日历视图，可切输入
+        )
         DatePickerDialog(
-            context,
-            { _, y, m, d ->
-                cal.set(y, m, d, 0, 0, 0)
-                onPick(cal.timeInMillis)
+            onDismissRequest = { pickingDate = null },
+            confirmButton = {
+                TextButton(onClick = {
+                    val picked = pickerState.selectedDateMillis
+                    if (picked != null) {
+                        val local = picked.fromUtcMidnight()
+                        when (field) {
+                            DateFieldKind.PURCHASE -> purchaseDate = local
+                            DateFieldKind.PRODUCE -> produceDate = local
+                            DateFieldKind.EXPIRE -> expiryDate = local
+                        }
+                    }
+                    pickingDate = null
+                }) { Text("确定") }
             },
-            cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)
-        ).show()
+            dismissButton = {
+                TextButton(onClick = { pickingDate = null }) { Text("取消") }
+            }
+        ) { DatePicker(state = pickerState, showModeToggle = true) }
     }
 
     val canSave = name.isNotBlank() && locationId.isNotBlank() &&
@@ -193,9 +226,48 @@ fun ItemEditScreen(itemId: String?, prefill: ItemPrefill? = null, onBack: () -> 
                 modifier = Modifier.fillMaxWidth(), singleLine = true
             )
 
-            DateRow("购买日期", purchaseDate, { pickDate(purchaseDate) { purchaseDate = it } }, { purchaseDate = 0L })
-            DateRow("生产日期", produceDate, { pickDate(produceDate) { produceDate = it } }, { produceDate = 0L })
-            DateRow("到期日期", expiryDate, { pickDate(expiryDate) { expiryDate = it } }, { expiryDate = 0L })
+            // ---- 日期三行：M3 选择器 + 保质期推算 + 购买日期快捷键 ----
+            DateRow(
+                label = "购买日期", value = purchaseDate,
+                onPick = { pickingDate = DateFieldKind.PURCHASE },
+                onClear = { purchaseDate = 0L },
+                trailing = {
+                    TextButton(onClick = { purchaseDate = todayLocalMidnight() }) { Text("今天") }
+                }
+            )
+            DateRow(
+                label = "生产日期", value = produceDate,
+                onPick = { pickingDate = DateFieldKind.PRODUCE },
+                onClear = { produceDate = 0L }
+            )
+            DateRow(
+                label = "到期日期", value = expiryDate,
+                onPick = { pickingDate = DateFieldKind.EXPIRE },
+                onClear = { expiryDate = 0L }
+            )
+
+            // 保质期快捷推算：基于已选的生产日期计算到期日，覆盖大多数包装标注习惯
+            Column(Modifier.fillMaxWidth()) {
+                Text(
+                    "按保质期推算到期日：",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SHELF_LIFE_PRESETS.forEach { months ->
+                        AssistChip(
+                            onClick = {
+                                if (produceDate <= 0) {
+                                    Toast.makeText(context, "请先选择生产日期", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    expiryDate = addMonths(produceDate, months)
+                                }
+                            },
+                            label = { Text("${months}个月") }
+                        )
+                    }
+                }
+            }
 
             Text("物品照片", style = MaterialTheme.typography.titleSmall)
             PhotoPicker(
@@ -248,11 +320,56 @@ fun ItemEditScreen(itemId: String?, prefill: ItemPrefill? = null, onBack: () -> 
     }
 }
 
+// ===== 日期选择辅助 =====
+
+/** 物品的三个日期字段，用于区分弹窗确认后写入哪个状态 */
+private enum class DateFieldKind { PURCHASE, PRODUCE, EXPIRE }
+
+/** 常用保质期（月） */
+private val SHELF_LIFE_PRESETS = listOf(3, 6, 12, 18, 24, 36)
+
+/** 本地毫秒 → 本地当日 0 点的毫秒（用于「今天」快捷键） */
+private fun todayLocalMidnight(): Long = Calendar.getInstance().apply {
+    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+    set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+}.timeInMillis
+
+/** 将本地毫秒时间转换为 UTC 零时对应毫秒（供 DatePicker 使用） */
+private fun Long.toUtcMidnight(): Long {
+    val local = Calendar.getInstance().apply { timeInMillis = this@toUtcMidnight }
+    return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        clear()
+        set(local.get(Calendar.YEAR), local.get(Calendar.MONTH), local.get(Calendar.DAY_OF_MONTH))
+    }.timeInMillis
+}
+
+/** 将 DatePicker 返回的 UTC 毫秒转回本地时区毫秒 */
+private fun Long.fromUtcMidnight(): Long {
+    val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = this@fromUtcMidnight }
+    return Calendar.getInstance().apply {
+        clear()
+        set(utc.get(Calendar.YEAR), utc.get(Calendar.MONTH), utc.get(Calendar.DAY_OF_MONTH))
+    }.timeInMillis
+}
+
+/** 在本地毫秒上加 N 个月（用于保质期推算） */
+private fun addMonths(baseMillis: Long, months: Int): Long = Calendar.getInstance().apply {
+    timeInMillis = baseMillis
+    add(Calendar.MONTH, months)
+}.timeInMillis
+
 @Composable
-private fun DateRow(label: String, value: Long, onPick: () -> Unit, onClear: () -> Unit) {
+private fun DateRow(
+    label: String,
+    value: Long,
+    onPick: () -> Unit,
+    onClear: () -> Unit,
+    trailing: (@Composable () -> Unit)? = null
+) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Text(label, modifier = Modifier.weight(1f))
         Text(DateUtils.formatDate(value.takeIf { it > 0 }))
+        trailing?.invoke()
         TextButton(onClick = onPick) { Text("选择") }
         if (value > 0) TextButton(onClick = onClear) { Text("清除") }
     }

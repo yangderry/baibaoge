@@ -57,6 +57,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.baibaoge.home.ui.navigation.ItemPrefill
 import com.baibaoge.home.util.DateUtils
+import com.baibaoge.home.util.ImagePreprocessor
 import com.baibaoge.home.util.ImageUtils
 import com.baibaoge.home.util.OcrParser
 import com.google.mlkit.vision.common.InputImage
@@ -108,11 +109,14 @@ fun OcrCaptureScreen(
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     processing = true
                     scope.launch(Dispatchers.IO) {
+                        // OCR 用原图高分辨率解码+预处理；展示/存储仍走 1280px 压缩图
+                        val ocrBase = ImagePreprocessor.decodeForOcr(tmp)
                         val path = ImageUtils.compressToPrivate(
                             context, tmp, "photo_${System.currentTimeMillis()}.jpg"
                         )
                         tmp.delete()
                         if (path == null) {
+                            ocrBase?.recycle()
                             withContext(Dispatchers.Main) {
                                 processing = false
                                 captureError = "照片保存失败，请重试"
@@ -120,10 +124,35 @@ fun OcrCaptureScreen(
                             return@launch
                         }
                         val recognized = runCatching {
-                            val image = InputImage.fromFilePath(context, Uri.fromFile(File(path)))
-                            TextRecognition.getClient(
+                            val recognizer = TextRecognition.getClient(
                                 ChineseTextRecognizerOptions.Builder().build()
-                            ).process(image).awaitTask()
+                            )
+                            if (ocrBase != null) {
+                                // 第一遍：灰度+对比度拉伸
+                                val enhanced = ImagePreprocessor.enhance(ocrBase)
+                                val first = recognizer.process(
+                                    InputImage.fromBitmap(enhanced, 0)
+                                ).awaitTask()
+                                enhanced.recycle()
+                                // 文字过少 → 自适应二值化兜底（点阵喷码、低对比包装）
+                                val result = if (first.text.ocrContentLength() < 10) {
+                                    val bin = ImagePreprocessor.binarize(ocrBase)
+                                    val second = recognizer.process(
+                                        InputImage.fromBitmap(bin, 0)
+                                    ).awaitTask()
+                                    bin.recycle()
+                                    if (second.text.ocrContentLength() >
+                                        first.text.ocrContentLength()
+                                    ) second else first
+                                } else first
+                                ocrBase.recycle()
+                                result
+                            } else {
+                                // 原图解码失败兜底：直接识别压缩图
+                                recognizer.process(
+                                    InputImage.fromFilePath(context, Uri.fromFile(File(path)))
+                                ).awaitTask()
+                            }
                         }.getOrNull()
                         withContext(Dispatchers.Main) {
                             processing = false
@@ -448,3 +477,6 @@ private suspend fun <T> com.google.android.gms.tasks.Task<T>.awaitTask(): T =
         addOnSuccessListener { cont.resume(it) }
         addOnFailureListener { cont.resumeWithException(it) }
     }
+
+/** 去除空白后的文字长度，用于判断识别结果是否过少（触发二值化兜底） */
+private fun String.ocrContentLength(): Int = replace(Regex("\\s"), "").length
