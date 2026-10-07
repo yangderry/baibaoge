@@ -36,12 +36,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/** 我的页：历史档案 / 同步管理 / 数据导出 / 设置入口 */
+/** 我的页：历史档案 / 同步管理 / 数据导出 / 设置 / 关于入口 */
 @Composable
 fun MineScreen(
     onNavigateArchives: () -> Unit,
     onNavigateSync: () -> Unit,
-    onNavigateSettings: () -> Unit
+    onNavigateSettings: () -> Unit,
+    onNavigateAbout: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -88,6 +89,7 @@ fun MineScreen(
             exportLauncher.launch("baobaoge_db_$stamp.db")
         }
         MineEntry("⚙️", "设置", "临期提醒天数 / 通知权限 / 后台白名单", onNavigateSettings)
+        MineEntry("ℹ️", "关于", "软件版本与联系方式", onNavigateAbout)
         SnackbarHost(snackbarHostState)
     }
 }

@@ -91,6 +91,7 @@ fun MainScreen(
     onNavigateLocationItems: (String) -> Unit,
     onNavigateBatchPrint: () -> Unit,
     onNavigateSettings: () -> Unit,
+    onNavigateAbout: () -> Unit,
     onNavigateSync: () -> Unit
 ) {
     var currentTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
@@ -176,7 +177,8 @@ fun MainScreen(
                     MainTab.MINE -> MineScreen(
                         onNavigateArchives = onNavigateToArchives,
                         onNavigateSync = onNavigateSync,
-                        onNavigateSettings = onNavigateSettings
+                        onNavigateSettings = onNavigateSettings,
+                        onNavigateAbout = onNavigateAbout
                     )
                 }
             }

@@ -17,6 +17,7 @@ import com.baibaoge.home.ui.items.ItemEditScreen
 import com.baibaoge.home.ui.locations.BatchPrintQrScreen
 import com.baibaoge.home.ui.locations.LocationItemsScreen
 import com.baibaoge.home.ui.main.MainScreen
+import com.baibaoge.home.ui.mine.AboutScreen
 import com.baibaoge.home.ui.mine.ArchivesScreen
 import com.baibaoge.home.ui.mine.SettingsScreen
 import com.baibaoge.home.ui.mine.SyncLogScreen
@@ -46,6 +47,7 @@ object Routes {
     const val LOCATION_ITEMS = "location_items/{locationId}"
     const val BATCH_PRINT_QR = "batch_print_qr"
     const val SETTINGS = "settings"
+    const val ABOUT = "about"
     const val SYNC = "sync"
     const val SYNC_LOG = "sync_log"
 
@@ -83,6 +85,7 @@ fun AppNavHost() {
                 onNavigateLocationItems = { id -> navController.navigate(Routes.locationItems(id)) },
                 onNavigateBatchPrint = { navController.navigate(Routes.BATCH_PRINT_QR) },
                 onNavigateSettings = { navController.navigate(Routes.SETTINGS) },
+                onNavigateAbout = { navController.navigate(Routes.ABOUT) },
                 onNavigateSync = { navController.navigate(Routes.SYNC) }
             )
         }
@@ -178,6 +181,9 @@ fun AppNavHost() {
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.ABOUT) {
+            AboutScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.SYNC) {
             SyncScreen(
